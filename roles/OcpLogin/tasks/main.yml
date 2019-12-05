@@ -1,0 +1,6 @@
+---
+  - name: Log into OpenShift
+    k8s_auth:
+      username: "{{ ocp_admin }}"
+      password: "{{ ocp_admin_pwd }}"
+    register: k8s_auth_results

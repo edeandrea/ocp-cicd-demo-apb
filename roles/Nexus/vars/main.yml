@@ -1,0 +1,14 @@
+---
+  ocp_proj_user: user1
+  ocp_proj_user_pwd: openshift
+  proj_nm_infra: labs-infra
+  proj_nm_dev: dev
+  proj_nm_prod: prod
+  proj_nm_sandbox: "{{ ocp_proj_user }}-sandbox"
+  nexus_operator_crds:
+    baseurl: https://raw.githubusercontent.com/redhat-gpte-devopsautomation/nexus-operator/master
+    templates:
+      - template_nm: gpte_v1alpha1_nexus_crd.yaml
+        template_path: /deploy/crds
+      - template_nm: clusterrole_admin.yaml
+        template_path: /deploy

@@ -1,0 +1,16 @@
+---
+  - hosts: localhost
+    module_defaults:
+      group/k8s:
+        host: "{{ ocp_api_url }}"
+        validate_certs: no
+    vars:
+      ocp_admin: opentlc-mgr
+      ocp_admin_pwd: r3dh4t1!
+      proj_nm_operators: gpte-operators
+    roles:
+      - OcpLogin
+      - Nexus
+      - SonarQube
+      - Projects
+      - OcpLogout
