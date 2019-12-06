@@ -1,23 +1,15 @@
 ---
-  - name: Provision Nexus Operator
-    block:
-      # - name: Log in
-      #   k8s_auth:
-      #     username: "{{ ocp_admin }}"
-      #     password: "{{ ocp_admin_pwd }}"
-      #   register: k8s_auth_results
+  - name: Download Nexus Operator CRDs
+    get_url:
+      url: "{{ nexus_operator_crds.baseurl }}{{ item.template_path }}/{{ item.template_nm }}"
+      dest: "/tmp/{{ item.template_nm }}"
+    loop: "{{ nexus_operator_crds.templates }}"
 
-      - name: Download Nexus Operator CRDs
-        get_url:
-          url: "{{ nexus_operator_crds.baseurl }}{{ item.template_path }}/{{ item.template_nm }}"
-          dest: "/tmp/{{ item.template_nm }}"
-        loop: "{{ nexus_operator_crds.templates }}"
-
-      - name: Deploy Nexus Operator CRDs
-        k8s:
-          src: "/tmp/{{ item.template_nm }}"
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-        loop: "{{ nexus_operator_crds.templates }}"
+  - name: Deploy Nexus Operator CRDs
+    k8s:
+      src: "/tmp/{{ item.template_nm }}"
+      api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+    loop: "{{ nexus_operator_crds.templates }}"
 
     # - name: Get all projects
     #   k8s_info:
@@ -29,10 +21,3 @@
     # - name: Print out projects list
     #   debug:
     #     var: project_list
-
-    # always:
-    #   - name: If login succeeded, try to log out
-    #     when: k8s_auth_results.k8s_auth.api_key is defined
-    #     k8s_auth:
-    #       state: absent
-    #       api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

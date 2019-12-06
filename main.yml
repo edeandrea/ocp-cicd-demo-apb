@@ -6,7 +6,6 @@
         validate_certs: no
     vars:
       ocp_admin: opentlc-mgr
-      ocp_admin_pwd: r3dh4t1!
       proj_nm_operators: gpte-operators
     roles:
       - OcpLogin
