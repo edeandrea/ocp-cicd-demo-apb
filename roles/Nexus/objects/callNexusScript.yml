@@ -1,0 +1,37 @@
+---
+  - name: Removing (potential) previously declared Groovy script {{ script_name }}
+    uri:
+      url: "{{ nexus_url.url }}/service/rest/v1/script/{{ script_name }}"
+      user: "{{ nexus_username }}"
+      password: "{{ nexus_password }}"
+      method: DELETE
+      force_basic_auth: yes
+      status_code: 204,404
+      validate_certs: no
+
+  - name: Declaring Groovy script {{ script_name }}
+    uri:
+      url: "{{ nexus_url.url }}/service/rest/v1/script"
+      user: "{{ nexus_username }}"
+      password: "{{ nexus_password }}"
+      body_format: json
+      method: POST
+      force_basic_auth: yes
+      status_code: 204
+      validate_certs: no
+      body:
+        name: "{{ script_name }}"
+        type: groovy
+        content: "{{ lookup('template', 'scripts/' + script_name + '.groovy') }}"
+
+  - name: Calling Groovy script {{ script_name }}
+    uri:
+      url: "{{ nexus_url.url }}/service/rest/v1/script/{{ script_name }}/run"
+      user: "{{ nexus_username }}"
+      password: "{{ nexus_password }}"
+      headers:
+        Content-Type: text/plain
+      method: POST
+      status_code: 200,204
+      force_basic_auth: yes
+      validate_certs: no

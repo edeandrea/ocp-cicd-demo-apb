@@ -6,6 +6,8 @@
   proj_nm_dev: dev
   proj_nm_prod: prod
   proj_nm_sandbox: "{{ ocp_proj_user }}-sandbox"
+  nexus_username: admin
+  nexus_password: admin123
   nexus_instance_url: https://raw.githubusercontent.com/edeandrea/summit-lab-spring-music/pipeline/misc/templates
   nexus_instance_filename: nexus-server-ocp4.yml
   nexus_operator_crds:
