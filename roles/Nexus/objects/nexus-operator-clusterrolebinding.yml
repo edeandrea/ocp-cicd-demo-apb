@@ -1,0 +1,12 @@
+apiVersion: "rbac.authorization.k8s.io/v1"
+kind: ClusterRoleBinding
+metadata:
+  name: nexus-operator
+roleRef:
+  apiGroup: "rbac.authorization.k8s.io"
+  kind: ClusterRole
+  name: nexus-operator
+subjects:
+  - kind: ServiceAccount
+    name: nexus-operator
+    namespace: "{{ proj_nm_operators }}"

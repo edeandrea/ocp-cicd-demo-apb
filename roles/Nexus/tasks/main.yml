@@ -1,23 +1,109 @@
 ---
-  - name: Download Nexus Operator CRDs
-    get_url:
-      url: "{{ nexus_operator_crds.baseurl }}{{ item.template_path }}/{{ item.template_nm }}"
-      dest: "/tmp/{{ item.template_nm }}"
-    loop: "{{ nexus_operator_crds.templates }}"
+  - name: Provision Nexus Operator
+    block:
+      - name: Log into OpenShift
+        k8s_auth:
+          username: "{{ ocp_admin }}"
+          password: "{{ ocp_admin_pwd }}"
+        register: k8s_auth_results
 
-  - name: Deploy Nexus Operator CRDs
-    k8s:
-      src: "/tmp/{{ item.template_nm }}"
-      api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-    loop: "{{ nexus_operator_crds.templates }}"
+      - name: Create the operators project if it doesn't already exist
+        k8s:
+          kind: Namespace
+          name: "{{ proj_nm_operators }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
 
-    # - name: Get all projects
-    #   k8s_info:
-    #     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-    #     kind: Pod
-    #     namespace: gpte-operators
-    #   register: project_list
-    #
-    # - name: Print out projects list
-    #   debug:
-    #     var: project_list
+      - name: Download Nexus Operator CRDs
+        get_url:
+          url: "{{ nexus_operator_crds.baseurl }}{{ item.template_path }}/{{ item.template_nm }}"
+          dest: "/tmp/{{ item.template_nm }}"
+        loop: "{{ nexus_operator_crds.templates }}"
+
+      - name: Deploy Nexus Operator CRDs
+        k8s:
+          src: "/tmp/{{ item.template_nm }}"
+          namespace: "{{ proj_nm_operators }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+        loop: "{{ nexus_operator_crds.templates }}"
+
+      - name: Delete Nexus Operator CRD files
+        file:
+          state: absent
+          path: "/tmp/{{ item.template_nm }}"
+        loop: "{{ nexus_operator_crds.templates }}"
+
+      - name: Create nexus-operator ClusterRoleBinding
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_operators }}"
+          definition: "{{ lookup('template', '../objects/nexus-operator-clusterrolebinding.yml') }}"
+          validate_certs: no
+
+      - name: Download Nexus Operator
+        get_url:
+          url: "{{ nexus_operator_crds.baseurl }}/deploy/operator.yaml"
+          dest: /tmp/operator.yaml
+
+      - name: Deploy Nexus Operator
+        k8s:
+          src: /tmp/operator.yaml
+          wait: yes
+          namespace: "{{ proj_nm_operators }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+
+      - name: Delete Nexus Operator file
+        file:
+          state: absent
+          path: /tmp/operator.yaml
+
+      - name: Create the infra project if it doesn't already exist
+        k8s:
+          kind: Namespace
+          name: "{{ proj_nm_infra }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+
+      - name: Download Nexus instance
+        get_url:
+          url: "{{ nexus_instance_url }}/{{ nexus_instance_filename }}"
+          dest: "/tmp/{{ nexus_instance_filename }}"
+
+      - name: Deploy Nexus instance
+        k8s:
+          src: "/tmp/{{ nexus_instance_filename }}"
+          namespace: "{{ proj_nm_infra }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+
+      - name: Delete Nexus instance file
+        file:
+          state: absent
+          path: "/tmp/{{ nexus_instance_filename }}"
+
+      - name: Get Cluster Wildcard domain
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          kind: IngressController
+          name: default
+          namespace: openshift-ingress-operator
+        register: cluster_wildcard_domain
+
+      - name: Wait for Nexus to become available
+        uri:
+          url: "https://nexus-{{ proj_nm_infra }}.{{ cluster_wildcard_domain.resources[0].status.domain }}"
+          validate_certs: no
+        register: nexus_url
+        until: nexus_url.status == 200
+        retries: 100
+        delay: 5
+
+    always:
+      - name: If OpenShift login succeeded, try to log out
+        when: k8s_auth_results.k8s_auth.api_key is defined
+        k8s_auth:
+          state: absent
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

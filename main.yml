@@ -8,8 +8,6 @@
       ocp_admin: opentlc-mgr
       proj_nm_operators: gpte-operators
     roles:
-      - OcpLogin
       - Nexus
       - SonarQube
       - Projects
-      - OcpLogout
