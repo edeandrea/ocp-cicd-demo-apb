@@ -117,7 +117,7 @@
         retries: 50
         delay: 10
 
-      - name: Update SonarQube Setting
+      - name: Update SonarQube Settings
         uri:
           url: "{{ sonarqube_url.url }}/api/settings/set"
           method: POST
