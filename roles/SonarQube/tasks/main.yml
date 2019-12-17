@@ -1,0 +1,161 @@
+---
+  - name: Provision SonarQube
+    block:
+      - name: Log into OpenShift
+        k8s_auth:
+          username: "{{ ocp_admin }}"
+          password: "{{ ocp_admin_pwd }}"
+        register: k8s_auth_results
+
+      - name: Create the {{ proj_nm_infra }} project if it doesn't already exist
+        k8s:
+          kind: Namespace
+          name: "{{ proj_nm_infra }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+        register: proj_infra
+        when: proj_infra is not defined
+
+      - name: Check if SonarQube already deployed
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          kind: Pod
+          namespace: "{{ proj_nm_infra }}"
+          label_selectors:
+            - app = sonarqube
+        register: sonarqube_pod
+
+      - name: Download SonarQube template
+        get_url:
+          url: "{{ sonarqube_instance_url }}/{{ sonarqube_instance_template_filename }}"
+          dest: "/tmp/{{ sonarqube_instance_template_filename }}"
+        when: sonarqube_pod.resources|length == 0
+
+      - name: Process SonarQube template
+        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc project {{ proj_nm_infra }} && oc process -f /tmp/{{ sonarqube_instance_template_filename }} -o yaml > /tmp/{{ sonarqube_instance_filename }}"
+        when: sonarqube_pod.resources|length == 0
+
+      - name: Deploy SonarQube template
+        k8s:
+          src: "/tmp/{{ sonarqube_instance_filename }}"
+          namespace: "{{ proj_nm_infra }}"
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+        when: sonarqube_pod.resources|length == 0
+
+      - name: "Delete SonarQube template file"
+        file:
+          state: absent
+          path: "/tmp/{{ item }}"
+        loop:
+          - "{{ sonarqube_instance_template_filename }}"
+          - "{{ sonarqube_instance_filename }}"
+        when: sonarqube_pod.resources|length == 0
+
+      - name: Get Cluster Wildcard domain
+        include: ../../common/getClusterWildcardDomain.yml
+
+      - name: Wait for SonarQube to become available
+        uri:
+          url: "https://sonarqube-{{ proj_nm_infra }}.{{ cluster_wildcard_domain.resources[0].status.domain }}"
+          validate_certs: no
+        register: sonarqube_url
+        until: sonarqube_url.status == 200
+        retries: 50
+        delay: 10
+
+      - name: Check if SonarQube plugins already installed
+        uri:
+          url: "{{ sonarqube_url.url }}/api/plugins/installed"
+          validate_certs: no
+          status_code: 200
+        register: sonarqube_installed_plugins
+
+      - name: Install SonarQube plugins
+        uri:
+          url: "{{ sonarqube_url.url }}/api/plugins/install?key={{ item }}"
+          method: POST
+          force_basic_auth: yes
+          user: "{{ sonarqube_admin_username }}"
+          password: "{{ sonarqube_admin_password }}"
+          validate_certs: no
+          status_code: 204
+        loop:
+          - cobertura
+          - findbugs
+          - scmgit
+          - groovy
+          - jacoco
+          - javai18n
+          - pmd
+          - java
+          - kotlin
+        when: sonarqube_installed_plugins.json.plugins|length == 0
+
+      - name: Restart SonarQube server
+        uri:
+          url: "{{ sonarqube_url.url }}/api/system/restart"
+          method: POST
+          force_basic_auth: yes
+          user: "{{ sonarqube_admin_username }}"
+          password: "{{ sonarqube_admin_password }}"
+          validate_certs: no
+          status_code: 200
+        when: sonarqube_installed_plugins.json.plugins|length == 0
+
+      - name: Wait for SonarQube restart to complete
+        uri:
+          url: "{{ sonarqube_url.url }}/api/plugins/installed"
+          validate_certs: no
+          force_basic_auth: yes
+          user: "{{ sonarqube_admin_username }}"
+          password: "{{ sonarqube_admin_password }}"
+        when: sonarqube_installed_plugins.json.plugins|length == 0
+        register: sonarqube_installed_plugins
+        until: sonarqube_installed_plugins.status == 200 and sonarqube_installed_plugins.json.plugins|length == 9
+        retries: 50
+        delay: 10
+
+      - name: Update SonarQube Setting
+        uri:
+          url: "{{ sonarqube_url.url }}/api/settings/set"
+          method: POST
+          validate_certs: no
+          force_basic_auth: yes
+          user: "{{ sonarqube_admin_username }}"
+          password: "{{ sonarqube_admin_password }}"
+          status_code: 204
+          body_format: form-urlencoded
+          body:
+            key: "{{ item.key }}"
+            values: "{{ item.value }}"
+        loop:
+          - { key: 'sonar.coverage.jacoco.xmlReportPaths', value: 'target/site/jacoco/jacoco.xml' }
+          - { key: 'sonar.junit.reportPaths', value: 'target/surefire-reports' }
+
+      - name: Restore Quality Profile
+        shell: 'curl -u {{ sonarqube_admin_username }}:{{ sonarqube_admin_password }} -k -X POST -H "Content-Type: multipart/form-data" -F "backup=@{{ playbook_dir }}/roles/SonarQube/objects/my_way_java_8_spring.xml" "{{ sonarqube_url.url }}/api/qualityprofiles/restore"'
+        args:
+          warn: no
+
+      - name: Set Quality Profile as default
+        uri:
+          url: "{{ sonarqube_url.url }}/api/qualityprofiles/set_default"
+          method: POST
+          validate_certs: no
+          force_basic_auth: yes
+          user: "{{ sonarqube_admin_username }}"
+          password: "{{ sonarqube_admin_password }}"
+          status_code: 204
+          body_format: form-urlencoded
+          body:
+            language: java
+            qualityProfile: My Way Java 8 Spring
+
+    always:
+      - name: If OpenShift login succeeded, try to log out
+        when: k8s_auth_results.k8s_auth.api_key is defined
+        k8s_auth:
+          state: absent
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

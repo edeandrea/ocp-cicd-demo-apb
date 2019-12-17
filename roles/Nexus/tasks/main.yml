@@ -65,6 +65,7 @@
           name: "{{ proj_nm_infra }}"
           api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
           validate_certs: no
+        register: proj_infra
 
       - name: Download Nexus instance
         get_url:
@@ -84,13 +85,7 @@
           path: "/tmp/{{ nexus_instance_filename }}"
 
       - name: Get Cluster Wildcard domain
-        k8s_info:
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-          validate_certs: no
-          kind: IngressController
-          name: default
-          namespace: openshift-ingress-operator
-        register: cluster_wildcard_domain
+        include: ../../common/getClusterWildcardDomain.yml
 
       - name: Wait for Nexus to become available
         uri:
@@ -112,32 +107,32 @@
         register: nexus_pod
 
       - name: Get Nexus initial password
-        shell: "oc rsh -n {{ proj_nm_infra }} {{ nexus_pod.resources[0].metadata.name }} cat /nexus-data/admin.password"
+        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc rsh -n {{ proj_nm_infra }} {{ nexus_pod.resources[0].metadata.name }} cat /nexus-data/admin.password"
         register: initial_nexus_password
 
       - name: Update Nexus admin password
-        include: ../objects/callNexusScript.yml
+        include: callNexusScript.yml
         vars:
           script_name: update_admin_password
-          nexus_password: "{{ initial_nexus_password.stdout }}"
+          nexus_password: "{{ initial_nexus_password.stdout_lines[5] }}"
 
       - name: Set anonymous access
-        include: ../objects/callNexusScript.yml
+        include: callNexusScript.yml
         vars:
           script_name: setup_anonymous_access
 
       - name: Create libs-snapshot repo
-        include: ../objects/callNexusScript.yml
+        include: callNexusScript.yml
         vars:
           script_name: create_libs-snapshot_repo
 
       - name: Create libs-snapshot publish role
-        include: ../objects/callNexusScript.yml
+        include: callNexusScript.yml
         vars:
           script_name: create_publish_role
 
       - name: Create libs-snapshot publish user
-        include: ../objects/callNexusScript.yml
+        include: callNexusScript.yml
         vars:
           script_name: create_publish_user
 

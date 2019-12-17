@@ -1,11 +1,4 @@
 ---
-  ocp_proj_user: user1
-  ocp_proj_user_pwd: openshift
-  proj_nm_operators: gpte-operators
-  proj_nm_infra: labs-infra
-  proj_nm_dev: dev
-  proj_nm_prod: prod
-  proj_nm_sandbox: "{{ ocp_proj_user }}-sandbox"
   nexus_username: admin
   nexus_password: admin123
   nexus_instance_url: https://raw.githubusercontent.com/edeandrea/summit-lab-spring-music/pipeline/misc/templates

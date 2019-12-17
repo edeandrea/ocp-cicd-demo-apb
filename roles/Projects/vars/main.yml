@@ -1,0 +1,6 @@
+---
+  ocp_proj_user: user1
+  ocp_proj_user_pwd: openshift
+  proj_nm_dev: dev
+  proj_nm_prod: prod
+  proj_nm_sandbox: "{{ ocp_proj_user }}-sandbox"

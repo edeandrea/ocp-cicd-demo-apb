@@ -22,7 +22,7 @@
       body:
         name: "{{ script_name }}"
         type: groovy
-        content: "{{ lookup('template', 'scripts/' + script_name + '.groovy') }}"
+        content: "{{ lookup('template', '../scripts/' + script_name + '.groovy') }}"
 
   - name: Calling Groovy script {{ script_name }}
     uri:

@@ -1,0 +1,6 @@
+---
+  sonarqube_instance_url: https://raw.githubusercontent.com/edeandrea/summit-lab-spring-music/pipeline/misc/templates
+  sonarqube_instance_template_filename: sonarqube-template-ocp4.yml
+  sonarqube_instance_filename: sonarqube-ocp4.yml
+  sonarqube_admin_username: admin
+  sonarqube_admin_password: admin
