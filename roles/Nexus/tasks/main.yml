@@ -7,12 +7,10 @@
           password: "{{ ocp_admin_pwd }}"
         register: k8s_auth_results
 
-      - name: Create the {{ proj_nm_operators }} project if it doesn't already exist
-        k8s:
-          kind: Namespace
-          name: "{{ proj_nm_operators }}"
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-          validate_certs: no
+      - name: "Create {{ proj_nm_operators }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_operators }}"
 
       - name: Download Nexus Operator CRDs
         get_url:
@@ -59,13 +57,10 @@
           state: absent
           path: /tmp/operator.yaml
 
-      - name: Create the {{ proj_nm_infra }} project if it doesn't already exist
-        k8s:
-          kind: Namespace
-          name: "{{ proj_nm_infra }}"
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-          validate_certs: no
-        register: proj_infra
+      - name: "Create {{ proj_nm_infra }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_infra }}"
 
       - name: Download Nexus instance
         get_url:
@@ -96,35 +91,16 @@
         retries: 50
         delay: 10
 
-      - name: Get Nexus pod name
-        k8s_info:
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      - name: Wait for libs-snapshot repo to become available
+        uri:
+          url: "https://nexus-{{ proj_nm_infra }}.{{ cluster_wildcard_domain.resources[0].status.domain }}/service/rest/v1/repositories"
           validate_certs: no
-          kind: Pod
-          namespace: "{{ proj_nm_infra }}"
-          label_selectors:
-            - app = nexus
-        register: nexus_pod
-
-      - name: Get Nexus initial password
-        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc rsh -n {{ proj_nm_infra }} {{ nexus_pod.resources[0].metadata.name }} cat /nexus-data/admin.password"
-        register: initial_nexus_password
-
-      - name: Update Nexus admin password
-        include: callNexusScript.yml
+        register: nexus_repos
+        until: nexus_repos.status == 200 and (nexus_repos.json | json_query(repos_query) | length == 1)
+        retries: 50
+        delay: 10
         vars:
-          script_name: update_admin_password
-          nexus_password: "{{ initial_nexus_password.stdout_lines[5] }}"
-
-      - name: Set anonymous access
-        include: callNexusScript.yml
-        vars:
-          script_name: setup_anonymous_access
-
-      - name: Create libs-snapshot repo
-        include: callNexusScript.yml
-        vars:
-          script_name: create_libs-snapshot_repo
+          repos_query: "[?name=='libs-snapshot']"
 
       - name: Create libs-snapshot publish role
         include: callNexusScript.yml

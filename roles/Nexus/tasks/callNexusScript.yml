@@ -8,6 +8,10 @@
       force_basic_auth: yes
       status_code: 204,404
       validate_certs: no
+    register: delete_script
+    until: (delete_script.status == 204) or (delete_script.status == 404)
+    retries: 50
+    delay: 10
 
   - name: Declaring Groovy script {{ script_name }}
     uri:

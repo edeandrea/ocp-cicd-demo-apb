@@ -7,14 +7,10 @@
           password: "{{ ocp_admin_pwd }}"
         register: k8s_auth_results
 
-      - name: Create the {{ proj_nm_infra }} project if it doesn't already exist
-        k8s:
-          kind: Namespace
-          name: "{{ proj_nm_infra }}"
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-          validate_certs: no
-        register: proj_infra
-        when: proj_infra is not defined
+      - name: "Create {{ proj_nm_infra }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_infra }}"
 
       - name: Check if SonarQube already deployed
         k8s_info:
@@ -26,31 +22,13 @@
             - app = sonarqube
         register: sonarqube_pod
 
-      - name: Download SonarQube template
-        get_url:
-          url: "{{ sonarqube_instance_url }}/{{ sonarqube_instance_template_filename }}"
-          dest: "/tmp/{{ sonarqube_instance_template_filename }}"
-        when: sonarqube_pod.resources|length == 0
-
-      - name: Process SonarQube template
-        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc project {{ proj_nm_infra }} && oc process -f /tmp/{{ sonarqube_instance_template_filename }} -o yaml > /tmp/{{ sonarqube_instance_filename }}"
-        when: sonarqube_pod.resources|length == 0
-
-      - name: Deploy SonarQube template
-        k8s:
-          src: "/tmp/{{ sonarqube_instance_filename }}"
-          namespace: "{{ proj_nm_infra }}"
-          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
-          validate_certs: no
-        when: sonarqube_pod.resources|length == 0
-
-      - name: "Delete SonarQube template file"
-        file:
-          state: absent
-          path: "/tmp/{{ item }}"
-        loop:
-          - "{{ sonarqube_instance_template_filename }}"
-          - "{{ sonarqube_instance_filename }}"
+      - name: Deploy SonarQube from template
+        include: ../../common/processTemplate.yml
+        vars:
+          base_url: "{{ sonarqube_instance_url }}"
+          template_filename: "{{ sonarqube_instance_template_filename }}"
+          template_processed_filename: "{{ sonarqube_instance_filename }}"
+          proj_nm: "{{ proj_nm_infra }}"
         when: sonarqube_pod.resources|length == 0
 
       - name: Get Cluster Wildcard domain

@@ -1,0 +1,147 @@
+---
+  - name: Provision User projects
+    block:
+      - fail: msg="The variable 'quay_docker_config_json_file' has not been defined"
+        when: quay_docker_config_json_file is undefined
+
+      - name: Log into OpenShift
+        k8s_auth:
+          username: "{{ ocp_proj_user }}"
+          password: "{{ ocp_proj_user_pwd }}"
+        register: k8s_auth_results
+
+      - name: "Create {{ proj_nm_prod }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_prod }}"
+
+      - name: "Check if {{ proj_nm_prod }} resources already exist"
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          kind: DeploymentConfig
+          namespace: "{{ proj_nm_prod }}"
+          label_selectors:
+            - application = summit-lab-spring-music
+        register: prod_app_db_dc
+
+      - name: "Create {{ proj_nm_prod }} resources"
+        include: ../../common/processTemplate.yml
+        vars:
+          base_url: "{{ templates_base_url }}"
+          template_filename: "{{ template_nm_prod }}"
+          template_processed_filename: "{{ template_nm_processed_prod }}"
+          proj_nm: "{{ proj_nm_prod }}"
+        when: prod_app_db_dc.resources|length == 0
+
+      - name: "Create {{ proj_nm_dev }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_dev }}"
+
+      - name: Create Quay secret
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_dev }}"
+          definition: "{{ lookup('template', '../objects/quay-secret.yml') }}"
+          validate_certs: no
+
+      - name: Link Quay secret to builder account
+        k8s:
+          kind: ServiceAccount
+          name: builder
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_dev }}"
+          validate_certs: no
+          definition:
+            secrets:
+              - name: quay
+
+      - name: Check if Jenkins already exists
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          kind: DeploymentConfig
+          namespace: "{{ proj_nm_dev }}"
+          name: jenkins
+        register: jenkins_dc
+
+      - name: Deploy Jenkins
+        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc project {{ proj_nm_dev }} && oc new-app jenkins-ephemeral -p MEMORY_LIMIT=2Gi"
+        when: jenkins_dc.resources|length == 0
+
+      - name: Update Jenkins CPU resources
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_dev }}"
+          validate_certs: no
+          name: jenkins
+          definition:
+            kind: DeploymentConfig
+            apiVersion: apps.openshift.io/v1
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: jenkins
+                      resources:
+                        requests:
+                          cpu: 500m
+                        limits:
+                          cpu: '2'
+
+      - name: Add Jenkins role binding
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_prod }}"
+          validate_certs: no
+          definition: "{{ lookup('template', '../objects/jenkins-rolebinding.yml') }}"
+
+      - name: Check if dev template is already deployed
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          kind: DeploymentConfig
+          namespace: "{{ proj_nm_dev }}"
+          name: spring-music
+        register: app_dc
+
+      - name: Deploy dev template if it doesn't already exist
+        include: ../../common/processTemplate.yml
+        vars:
+          base_url: "{{ templates_base_url }}"
+          template_filename: "{{ template_nm_dev }}"
+          template_processed_filename: "{{ template_nm_processed_dev }}"
+          proj_nm: "{{ proj_nm_dev }}"
+        when: app_dc.resources|length == 0
+
+      - name: "Create {{ proj_nm_sandbox }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_sandbox }}"
+
+      - name: Log into OpenShift as admin
+        k8s_auth:
+          username: "{{ ocp_admin }}"
+          password: "{{ ocp_admin_pwd }}"
+        register: k8s_auth_results
+
+      - name: "Add quota to {{ proj_nm_sandbox }} project"
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          namespace: "{{ proj_nm_sandbox }}"
+          validate_certs: no
+          definition: "{{ lookup('template', '../objects/sandbox-resource-quota.yml') }}"
+
+      - name: Get Cluster Wildcard domain
+        include: ../../common/getClusterWildcardDomain.yml
+
+      - debug:
+          msg: "Provisioning has completed. Please go to https://console-openshift-console.{{ cluster_wildcard_domain.resources[0].status.domain }}/k8s/ns/{{ proj_nm_dev }}/builds/spring-music-pipeline-git-1 to see the status of the running build. It may take some time to complete as Jenkins takes a while to start up."
+
+    always:
+      - name: If OpenShift login succeeded, try to log out
+        when: k8s_auth_results.k8s_auth.api_key is defined
+        k8s_auth:
+          state: absent
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

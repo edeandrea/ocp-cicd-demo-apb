@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: edit
+  namespace: "{{ proj_nm_prod }}"
+subjects:
+  - kind: ServiceAccount
+    name: jenkins
+    namespace: "{{ proj_nm_dev }}"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit

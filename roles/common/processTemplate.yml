@@ -1,0 +1,23 @@
+---
+  - name: Download template {{ template_filename }}
+    get_url:
+      url: "{{ base_url }}/{{ template_filename }}"
+      dest: "/tmp/{{ template_filename }}"
+
+  - name: Process template {{ template_filename }}
+    shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc project {{ proj_nm }} && oc process -f /tmp/{{ template_filename }} -o yaml > /tmp/{{ template_processed_filename }}"
+
+  - name: Deploy processed template {{ template_processed_filename }}
+    k8s:
+      src: "/tmp/{{ template_processed_filename }}"
+      namespace: "{{ proj_nm }}"
+      api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      validate_certs: no
+
+  - name: Delete template files
+    file:
+      state: absent
+      path: "/tmp/{{ item }}"
+    loop:
+      - "{{ template_filename }}"
+      - "{{ template_processed_filename }}"

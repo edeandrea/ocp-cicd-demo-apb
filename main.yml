@@ -1,5 +1,6 @@
 ---
   - hosts: localhost
+    gather_facts: no
     module_defaults:
       group/k8s:
         host: "{{ ocp_api_url }}"

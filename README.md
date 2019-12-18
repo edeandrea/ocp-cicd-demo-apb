@@ -3,10 +3,10 @@
 
  To run this you would do something like
  ```bash
-$ ansible-playbook -vvv main.yml -e ocp_api_url=<OCP_API_URL> -e ocp_admin_pwd=<OCP_ADMIN_USER_PASSWORD>
+$ ansible-playbook -vvv main.yml -e ocp_api_url=<OCP_API_URL> -e ocp_admin_pwd=<OCP_ADMIN_USER_PASSWORD> -e quay_docker_config_json_file=<LOCATION_OF_QUAY_SECRET>
  ```
 
-You'll need to replace `<OCP_API_URL>` with the API url of your cluster & `<OCP_ADMIN_USER_PASSWORD>` with the password for the OCP admin account.
+You'll need to replace `<OCP_API_URL>` with the API url of your cluster, `<OCP_ADMIN_USER_PASSWORD>` with the password for the OCP admin account, & `LOCATION_OF_QUAY_SECRET` with the path to the Quay secret json file.
 
 This playbook also makes some assumptions about some things within the cluster. These variables can be overridden with the `-e` switch when running the playbook.
 
