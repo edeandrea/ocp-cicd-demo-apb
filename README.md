@@ -14,6 +14,5 @@ This playbook also makes some assumptions about some things within the cluster. 
 | ----------- | -------- | ------------- |
 | OpenShift admin user name | `ocp_admin` | `opentlc-mgr` |
 | OCP Project containing operators | `proj_nm_operators` | `gpte-operators` |
-| OCP Project containing infra components (Nexus, SonarQube, etc) | `proj_nm_infra` | `labs-infra` |
 | OCP user to install demo into | `ocp_proj_user` | `user1` |
 | OCP user password for above user | `ocp_proj_user_pwd` | `openshift` |
