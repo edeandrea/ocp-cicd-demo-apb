@@ -140,7 +140,7 @@
           msg: "Provisioning has completed. Please go to https://console-openshift-console.{{ cluster_wildcard_domain.resources[0].status.domain }}/k8s/ns/{{ proj_nm_dev }}/builds/spring-music-pipeline-git-1 to see the status of the running build. It may take some time to complete as Jenkins takes a while to start up."
 
     always:
-      - name: If OpenShift login succeeded, try to log out
+      - name: If OpenShift login succeeded try to log out
         when: k8s_auth_results.k8s_auth.api_key is defined
         k8s_auth:
           state: absent
