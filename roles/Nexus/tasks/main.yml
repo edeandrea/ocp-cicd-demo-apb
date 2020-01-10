@@ -113,7 +113,7 @@
           script_name: create_publish_user
 
     always:
-      - name: If OpenShift login succeeded, try to log out
+      - name: If OpenShift login succeeded try to log out
         when: k8s_auth_results.k8s_auth.api_key is defined
         k8s_auth:
           state: absent
