@@ -1,0 +1,71 @@
+---
+  - name: Provision CodeReady Workspaces
+    block:
+      - name: Log into OpenShift
+        k8s_auth:
+          username: "{{ ocp_admin }}"
+          password: "{{ ocp_admin_pwd }}"
+        register: k8s_auth_results
+
+      - name: Create new project request template
+        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc create -f ./roles/CodeReadyWorkspaces/objects/demo-project-request-template.yml -n openshift-config"
+
+      - name: Apply the new project request template
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          definition: "{{ lookup('template', '../objects/demo-project-request.yml') }}"
+
+      - name: "Create {{ proj_nm_infra }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_infra }}"
+
+      - name: "Create the {{ crw_workspaces_namespace }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ crw_workspaces_namespace }}"
+
+      # - name: "Remove the limit range in the {{ crw_workspaces_namespace }} project"
+      #   k8s:
+      #     api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+      #     validate_certs: no
+      #     namespace: "{{ crw_workspaces_namespace }}"
+      #     kind: LimitRange
+      #     api_version: v1
+      #     name: "{{ crw_workspaces_namespace }}-core-resource-limits"
+      #     state: absent
+
+      - name: Install CodeReady Workspaces Operator
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          namespace: "{{ proj_nm_infra }}"
+          definition: "{{ lookup('template', '../objects/codeready-workspaces-operator.yml') }}"
+
+      - name: Wait for CodeReady Workspaces Operator to spin up
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          namespace: "{{ proj_nm_infra }}"
+          api_version: apps/v1
+          kind: Deployment
+          name: codeready-operator
+        register: codeready_operator_deployment
+        until: codeready_operator_deployment.resources is defined and codeready_operator_deployment.resources|length == 1 and codeready_operator_deployment.resources[0].status.readyReplicas is defined and codeready_operator_deployment.resources[0].status.readyReplicas == 1 and codeready_operator_deployment.resources[0].status.availableReplicas is defined and codeready_operator_deployment.resources[0].status.availableReplicas == 1
+        retries: 50
+        delay: 10
+
+      - name: Install CodeReady Workspaces
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          namespace: "{{ proj_nm_infra }}"
+          definition: "{{ lookup('template', '../objects/codeready-workspaces.yml') }}"
+
+    always:
+      - name: If OpenShift login succeeded try to log out
+        when: k8s_auth_results.k8s_auth.api_key is defined
+        k8s_auth:
+          state: absent
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
