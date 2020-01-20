@@ -1,0 +1,27 @@
+---
+  - name: Provision CodeReady Workspaces
+    block:
+      - name: Log into OpenShift
+        k8s_auth:
+          username: "{{ ocp_admin }}"
+          password: "{{ ocp_admin_pwd }}"
+        register: k8s_auth_results
+
+      - name: "Create {{ proj_nm_infra }} project if it doesn't already exist"
+        include: ../../common/createProject.yml
+        vars:
+          proj_nm: "{{ proj_nm_infra }}"
+
+      - name: Install CodeReady Workspaces
+        k8s:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          namespace: "{{ proj_nm_infra }}"
+          definition: "{{ lookup('template', '../objects/codeready-workspaces.yml') }}"
+
+    always:
+      - name: If OpenShift login succeeded try to log out
+        when: k8s_auth_results.k8s_auth.api_key is defined
+        k8s_auth:
+          state: absent
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
