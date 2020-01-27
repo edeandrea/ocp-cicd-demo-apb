@@ -21,10 +21,10 @@
         vars:
           proj_nm: "{{ proj_nm_infra }}"
 
-      - name: "Create the {{ crw_workspaces_namespace }} project if it doesn't already exist"
-        include: ../../common/createProject.yml
-        vars:
-          proj_nm: "{{ crw_workspaces_namespace }}"
+      # - name: "Create the {{ crw_workspaces_namespace }} project if it doesn't already exist"
+      #   include: ../../common/createProject.yml
+      #   vars:
+      #     proj_nm: "{{ crw_workspaces_namespace }}"
 
       # - name: "Remove the limit range in the {{ crw_workspaces_namespace }} project"
       #   k8s:
