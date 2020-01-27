@@ -1,22 +1,22 @@
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
-  name: codeready-workspaces-operator-group
+  annotations:
+    olm.providedAPIs: CheCluster.v1.org.eclipse.che
+  name: "{{ proj_nm_infra }}-crw"
   namespace: "{{ proj_nm_infra }}"
 spec:
   targetNamespaces:
-    - "{{ proj_nm_infra }}"
+  - "{{ proj_nm_infra }}"
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: codeready-workspaces
   namespace: "{{ proj_nm_infra }}"
-  labels:
-    app.kubernetes.io/part-of: codeready-workspaces
-    app: codeready-workspaces
 spec:
   channel: latest
+  installPlanApproval: Automatic
   name: codeready-workspaces
   source: redhat-operators
   sourceNamespace: openshift-marketplace
