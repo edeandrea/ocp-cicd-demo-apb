@@ -7,14 +7,29 @@
           password: "{{ ocp_admin_pwd }}"
         register: k8s_auth_results
 
+      - name: Check if new project request template exists
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          validate_certs: no
+          api_version: config.openshift.io/v1
+          kind: Project
+          name: cluster
+        register: demo_project_request_template_result
+
+      - name: Set whether to override project request template
+        set_fact:
+          create_project_request_template: "{{ not(demo_project_request_template_result is not undefined and demo_project_request_template_result.resources|length == 1 and demo_project_request_template_result.resources[0].spec is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate.name is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate.name == 'demo-project-request')|bool }}"
+
       - name: Create new project request template
         shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc create -f ./roles/CodeReadyWorkspaces/objects/demo-project-request-template.yml -n openshift-config"
+        when: create_project_request_template
 
       - name: Apply the new project request template
         k8s:
           api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
           validate_certs: no
           definition: "{{ lookup('template', '../objects/demo-project-request.yml') }}"
+        when: create_project_request_template
 
       - name: "Create {{ proj_nm_infra }} project if it doesn't already exist"
         include: ../../common/createProject.yml
