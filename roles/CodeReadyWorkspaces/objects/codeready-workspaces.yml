@@ -3,9 +3,6 @@ kind: CheCluster
 metadata:
   name: codeready-workspaces
   namespace: "{{ proj_nm_infra }}"
-  labels:
-    app.kubernetes.io/part-of: codeready-workspaces
-    app: codeready-workspaces
 spec:
   server:
     cheFlavor: codeready
