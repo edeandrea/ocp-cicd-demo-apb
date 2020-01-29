@@ -557,18 +557,24 @@ objects:
               exec:
                 command:
                 - "/opt/rhamt-cli/bin/stop.sh"
-          livenessProbe:
-            exec:
-              command:
-              - "/bin/bash"
-              - "-c"
-              - "/opt/rhamt-cli/bin/livenessProbe.sh"
-          readinessProbe:
-            exec:
-              command:
-              - "/bin/bash"
-              - "-c"
-              - "/opt/rhamt-cli/bin/livenessProbe.sh"
+          # livenessProbe:
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 20
+          #   timeoutSeconds: 5
+          #   exec:
+          #     command:
+          #     - "/bin/bash"
+          #     - "-c"
+          #     - "/opt/rhamt-cli/bin/livenessProbe.sh"
+          # readinessProbe:
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 20
+          #   timeoutSeconds: 5
+          #   exec:
+          #     command:
+          #     - "/bin/bash"
+          #     - "-c"
+          #     - "/opt/rhamt-cli/bin/livenessProbe.sh"
           ports: []
           env:
           - name: IS_MASTER
