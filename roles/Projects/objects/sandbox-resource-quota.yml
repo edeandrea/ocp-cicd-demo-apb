@@ -10,3 +10,5 @@ spec:
     pods: '4'
     requests.cpu: '1'
     requests.memory: 2Gi
+  scopes:
+    - NotTerminating
