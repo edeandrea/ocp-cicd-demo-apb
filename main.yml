@@ -10,6 +10,7 @@
       proj_nm_operators: gpte-operators
       proj_nm_infra: labs-infra
     roles:
+      - ClusterLogging
       - CodeReadyWorkspaces
       #- AMQStreams
       - Nexus

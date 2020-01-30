@@ -67,7 +67,9 @@
         register: jenkins_dc
 
       - name: Deploy Jenkins
-        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc project {{ proj_nm_dev }} && oc new-app jenkins-ephemeral -p MEMORY_LIMIT=2Gi"
+        include: ../../common/runOcShell.yml
+        vars:
+          oc_command: "oc new-app jenkins-ephemeral -p MEMORY_LIMIT=2Gi -n {{ proj_nm_dev }}"
         when: jenkins_dc.resources|length == 0
 
       - name: Update Jenkins CPU resources

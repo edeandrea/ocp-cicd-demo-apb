@@ -23,7 +23,10 @@
         register: rhamt_pod
 
       - name: Deploy RHAMT
-        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc process -f ./roles/RHAMT/objects/rhamt.yml -n {{ proj_nm_infra }} | oc create -n {{ proj_nm_infra }} -f -"
+        include: ../../common/runOcShell.yml
+        vars:
+          task_name: Deploy RHAMT
+          oc_command: "oc process -f ./roles/RHAMT/objects/rhamt.yml -n {{ proj_nm_infra }} | oc create -n {{ proj_nm_infra }} -f -"
         when: rhamt_pod.resources|length == 0
 
     always:

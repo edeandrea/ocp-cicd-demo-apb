@@ -1,0 +1,5 @@
+---
+  proj_nm_logging: openshift-logging
+  proj_nm_elasticsearch: openshift-operators-redhat
+  elasticsearch_operator_nm: elasticsearch-operator
+  cluster_logging_operator_nm: cluster-logging

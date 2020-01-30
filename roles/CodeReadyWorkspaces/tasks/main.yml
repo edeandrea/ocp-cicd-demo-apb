@@ -21,7 +21,9 @@
           create_project_request_template: "{{ not(demo_project_request_template_result is not undefined and demo_project_request_template_result.resources|length == 1 and demo_project_request_template_result.resources[0].spec is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate.name is not undefined and demo_project_request_template_result.resources[0].spec.projectRequestTemplate.name == 'demo-project-request')|bool }}"
 
       - name: Create new project request template
-        shell: "oc login {{ ocp_api_url }} --token={{ k8s_auth_results.k8s_auth.api_key }} --insecure-skip-tls-verify=true && oc create -f ./roles/CodeReadyWorkspaces/objects/demo-project-request-template.yml -n openshift-config"
+        include: ../../common/runOcShell.yml
+        vars:
+          oc_command: "oc create -f ./roles/CodeReadyWorkspaces/objects/demo-project-request-template.yml -n openshift-config"
         when: create_project_request_template
 
       - name: Apply the new project request template
