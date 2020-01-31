@@ -1,8 +1,43 @@
 # ocp-ci-cd-demo-apb
 OpenShift CI/CD Demo provisioning playbook on an OCP 4.x cluster.
 
-The playbook provisions all of the necessary pieces to run the demo (CodeReady Workspaces, SonarQube, Nexus, Jenkins).
+The playbook provisions all of the necessary pieces to run the demo (CodeReady Workspaces, SonarQube, Nexus, Jenkins). It also provisions the Red Hat Application Migration Toolkit & the [OpenShift Cluster Logging](https://docs.openshift.com/container-platform/4.2/logging/cluster-logging-deploying.html).
 
+## Deployed Resource URLs
+All the below resource URLs are suffixed with the apps url of the cluster (i.e. for an RHPDS environment, `apps.cluster-##GUID##.##GUID##.example.opentlc.com`).
+
+- [Nexus OSS](https://www.sonatype.com/nexus-repository-oss)
+    - https://nexus-labs-infra.##CLUSTER_SUFFIX##
+    - Admin user/pwd is `admin/admin123`
+- [SonarQube](https://www.sonarqube.org)
+    - https://sonarqube-labs-infra.##CLUSTER_SUFFIX##
+    - Admin user/pwd is `admin/admin`
+- [CodeReady Workspaces 2.0](https://developers.redhat.com/products/codeready-workspaces/overview)
+    - http://codeready-labs-infra.##CLUSTER_SUFFIX##
+- [Red Hat Application Migration Toolkit](https://developers.redhat.com/products/rhamt/overview)
+    - http://rhamt-web-console-labs-infra.##CLUSTER_SUFFIX##
+- [Kibana](https://www.elastic.co/kibana) (Cluster Logging Dashboard)
+    - https://kibana-openshift-logging.##CLUSTER_SUFFIX##
+- [Grafana](https://grafana.com/grafana) (Cluster Monitoring Dashboard)
+    - https://grafana-openshift-monitoring.##CLUSTER_SUFFIX##
+- [Demo app](https://github.com/edeandrea/summit-lab-spring-music/tree/pipeline) in dev
+    - Main page
+        - http://spring-music-dev.##CLUSTER_SUFFIX##
+    - Actuator home
+        - http://spring-music-dev.##CLUSTER_SUFFIX##/actuator
+    - Swagger UI
+        - http://spring-music-dev.##CLUSTER_SUFFIX##/swagger-ui.html
+- [Demo app](https://github.com/edeandrea/summit-lab-spring-music/tree/pipeline) in prod
+    - Main page
+        - http://spring-music-prod.##CLUSTER_SUFFIX##
+    - Actuator home
+        - http://spring-music-prod.##CLUSTER_SUFFIX##/actuator
+    - Swagger UI
+        - http://spring-music-prod.##CLUSTER_SUFFIX##/swagger-ui.html
+- [Demo app](https://github.com/edeandrea/summit-lab-spring-music/tree/pipeline) image on quay.io
+    - https://quay.io/repository/edeandrea/spring-music?tab=tags
+
+## Demo Pipeline Stages
 The demo takes a [Spring Boot Application](https://github.com/edeandrea/summit-lab-spring-music/tree/pipeline) and deploys it to OpenShift along with a pipeline that moves it through various stages:
 
 - Build app
