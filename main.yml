@@ -16,7 +16,9 @@
       - role: CodeReadyWorkspaces
         tags:
           - crw
-      #- AMQStreams
+      # - role: AMQStreams
+      #   tags:
+      #     - amqstreams
       - role: Nexus
         tags:
           - nexus
