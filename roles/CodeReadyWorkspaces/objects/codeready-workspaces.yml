@@ -1,7 +1,7 @@
 apiVersion: org.eclipse.che/v1
 kind: CheCluster
 metadata:
-  name: codeready-workspaces
+  name: "{{ crw_name }}"
   namespace: "{{ proj_nm_infra }}"
 spec:
   server:
@@ -22,3 +22,15 @@ spec:
     pvcStrategy: per-workspace
     pvcClaimSize: 1Gi
     preCreateSubPaths: true
+---
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: codeready-workspaces-app-menu-link
+spec:
+  href: "https://{{ crw_name }}-{{ proj_nm_infra }}.{{ cluster_wildcard_domain.resources[0].status.domain }}"
+  location: ApplicationMenu
+  text: CodeReady Workspaces
+  applicationMenu:
+    section: Development Tools
+    imageURL: https://raw.githubusercontent.com/redhat-developer/codeready-workspaces/master/product/branding/CodeReady.png
