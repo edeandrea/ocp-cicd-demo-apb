@@ -10,10 +10,22 @@
       proj_nm_operators: gpte-operators
       proj_nm_infra: labs-infra
     roles:
-      - ClusterLogging
-      - CodeReadyWorkspaces
+      - role: ClusterLogging
+        tags:
+          - clusterlogging
+      - role: CodeReadyWorkspaces
+        tags:
+          - crw
       #- AMQStreams
-      - Nexus
-      - SonarQube
-      - RHAMT
-      - Projects
+      - role: Nexus
+        tags:
+          - nexus
+      - role: SonarQube
+        tags:
+          - sonarqube
+      - role: RHAMT
+        tags:
+          - rhamt
+      - role: Projects
+        tags:
+          - projects
