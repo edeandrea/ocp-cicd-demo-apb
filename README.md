@@ -16,6 +16,8 @@ Each role is tagged in the playbook as follows:
 
 By default all roles are executed, but you could only run certain roles with the `--tags` parameter (i.e. `--tags "nexus,sonarqube"`), or skip certain roles with the `--skip-tags` parameter (i.e. `--skip-tags "clusterlogging,rhamt"`).
 
+There are also `required` & `optional` tags you can use if you only want to provision the required pieces of the demo but none of the optional pieces.
+
 ## Deployed Resource URLs
 All the below resource URLs are suffixed with the apps url of the cluster (i.e. for an RHPDS environment, `apps.cluster-##GUID##.##GUID##.example.opentlc.com`).
 

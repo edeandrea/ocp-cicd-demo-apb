@@ -13,21 +13,27 @@
       - role: ClusterLogging
         tags:
           - clusterlogging
+          - optional
       - role: CodeReadyWorkspaces
         tags:
           - crw
+          - optional
       # - role: AMQStreams
       #   tags:
       #     - amqstreams
       - role: Nexus
         tags:
           - nexus
+          - required
       - role: SonarQube
         tags:
           - sonarqube
+          - required
       - role: RHAMT
         tags:
           - rhamt
+          - optional
       - role: Projects
         tags:
           - projects
+          - required
