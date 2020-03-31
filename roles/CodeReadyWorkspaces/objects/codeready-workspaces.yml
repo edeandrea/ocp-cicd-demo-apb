@@ -7,7 +7,7 @@ spec:
   server:
     cheFlavor: codeready
     tlsSupport: true
-    selfSignedCert: true
+    selfSignedCert: false
     customCheProperties:
       # CHE_WORKSPACE_DEFAULT__MEMORY__LIMIT__MB: "2048"
       # CHE_INFRA_KUBERNETES_NAMESPACE_DEFAULT: "{{ crw_workspaces_namespace }}"
