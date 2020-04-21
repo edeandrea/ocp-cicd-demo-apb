@@ -8,7 +8,7 @@ spec:
     cheFlavor: codeready
     tlsSupport: true
     selfSignedCert: false
-    workspaceNamespaceDefault: "workspace-<username>-<workspaceid>"
+    workspaceNamespaceDefault: "crw-<username>-<workspaceid>"
     customCheProperties:
       # CHE_WORKSPACE_DEFAULT__MEMORY__LIMIT__MB: "2048"
       # CHE_INFRA_KUBERNETES_NAMESPACE_DEFAULT: "{{ crw_workspaces_namespace }}"
