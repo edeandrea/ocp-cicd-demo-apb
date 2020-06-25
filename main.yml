@@ -33,6 +33,10 @@
         tags:
           - rhamt
           - optional
+      - role: Pipelines
+        tags:
+          - pipelines
+          - optional
       - role: Projects
         tags:
           - projects

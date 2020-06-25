@@ -11,6 +11,7 @@ Each role is tagged in the playbook as follows:
 | Nexus | `nexus` |
 | SonarQube | `sonarqube` |
 | RHAMT | `rhamt` |
+| Pipelines | `pipelines` |
 | Projects | `projects` |
 
 By default all roles are executed, but you could only run certain roles with the `--tags` parameter (i.e. `--tags "nexus,sonarqube"`), or skip certain roles with the `--skip-tags` parameter (i.e. `--skip-tags "clusterlogging,rhamt"`).
@@ -83,7 +84,7 @@ The demo takes a [Spring Boot Application](https://github.com/edeandrea/summit-l
 
  To run this you would do something like
  ```bash
-$ ansible-playbook -vvv main.yml -e ocp_api_url=<OCP_API_URL> -e ocp_admin_pwd=<OCP_ADMIN_USER_PASSWORD> -e quay_docker_config_json_file=<LOCATION_OF_QUAY_SECRET>
+$ ansible-playbook -v main.yml -e ocp_api_url=<OCP_API_URL> -e ocp_admin_pwd=<OCP_ADMIN_USER_PASSWORD> -e quay_docker_config_json_file=<LOCATION_OF_QUAY_SECRET>
  ```
 
 You'll need to replace `<OCP_API_URL>` with the API url of your cluster, `<OCP_ADMIN_USER_PASSWORD>` with the password for the OCP admin account, & `LOCATION_OF_QUAY_SECRET` with the path to the Quay secret json file.
