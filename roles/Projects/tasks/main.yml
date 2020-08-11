@@ -69,7 +69,7 @@
       - name: Deploy Jenkins
         include: ../../common/runOcShell.yml
         vars:
-          oc_command: "oc new-app jenkins-ephemeral -p MEMORY_LIMIT=2Gi -e INSTALL_PLUGINS=jacoco:3.0.5,structs:1.20 -n {{ proj_nm_dev }}"
+          oc_command: "oc new-app jenkins-ephemeral -p MEMORY_LIMIT=2Gi -e INSTALL_PLUGINS=jacoco:3.0.5,structs:1.20 -l app.openshift.io/runtime=jenkins -n {{ proj_nm_dev }}"
         when: jenkins_dc.resources|length == 0
 
       - name: Update Jenkins CPU resources
