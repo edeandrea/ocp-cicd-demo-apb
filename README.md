@@ -1,6 +1,6 @@
 OpenShift CI/CD Demo provisioning playbook on an OCP 4.x cluster.
 
-The playbook provisions all of the necessary pieces to run the demo (CodeReady Workspaces, SonarQube, Nexus, Jenkins). It also provisions the Red Hat Application Migration Toolkit & the [OpenShift Cluster Logging](https://docs.openshift.com/container-platform/4.2/logging/cluster-logging-deploying.html).
+The playbook provisions all of the necessary pieces to run the demo (CodeReady Workspaces, SonarQube, Nexus, Jenkins). It also provisions the Red Hat Application Migration Toolkit & the [OpenShift Cluster Logging](https://docs.openshift.com/container-platform/4.5/logging/cluster-logging-deploying.html).
 
 Each role is tagged in the playbook as follows:
 
