@@ -4,15 +4,17 @@ The playbook provisions all of the necessary pieces to run the demo (CodeReady W
 
 Each role is tagged in the playbook as follows:
 
-| Role | Tag Name |
-| ---- | -------- |
-| ClusterLogging | `clusterlogging` |
-| CodeReadyWorkspaces | `crw` |
-| Nexus | `nexus` |
-| SonarQube | `sonarqube` |
-| RHAMT | `rhamt` |
-| Pipelines | `pipelines` |
-| Projects | `projects` |
+| Role | Tag Name | Required / Optional |
+| ---- | -------- | ------------------- |
+| ClusterLogging | `clusterlogging` | `optional` |
+| CodeReadyWorkspaces | `crw` | `optional` |
+| Nexus | `nexus` | `required` |
+| SonarQube | `sonarqube` | `required` |
+| RHAMT | `rhamt` | `optional` |
+| Pipelines | `pipelines` | `optional` |
+| Projects | `projects` | `required` |
+
+The `required`/`optional` tags can also be used to only provision the minimum required for the demo to work (i.e. `--tags "required"`).
 
 By default all roles are executed, but you could only run certain roles with the `--tags` parameter (i.e. `--tags "nexus,sonarqube"`), or skip certain roles with the `--skip-tags` parameter (i.e. `--skip-tags "clusterlogging,rhamt"`).
 
