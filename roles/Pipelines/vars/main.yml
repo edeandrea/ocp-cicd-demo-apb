@@ -1,0 +1,11 @@
+---
+  pipelines_folder_nm: tekton
+  pipelines_files:
+    - task-binary-s2i.yml
+    - task-curl.yml
+    - task-deploy.yml
+    - task-maven.yml
+    - task-s2i.yml
+    - pvc.yml
+    - pipeline.yml
+  temp_dir: "/tmp/{{ pipelines_folder_nm }}"

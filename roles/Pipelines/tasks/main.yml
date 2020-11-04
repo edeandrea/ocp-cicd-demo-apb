@@ -26,9 +26,45 @@
        retries: 50
        delay: 10
 
+     - name: Log out of OpenShift admin user
+       when: k8s_auth_results.k8s_auth.api_key is defined
+       k8s_auth:
+         state: absent
+         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+
+     - name: Log into OpenShift as project user
+       k8s_auth:
+         username: "{{ ocp_proj_user }}"
+         password: "{{ ocp_proj_user_pwd }}"
+       register: k8s_auth_results
+
+     - name: Create temp folder
+       file:
+         path: "{{ temp_dir }}"
+         state: directory
+
+     - name: Download Pipeline files
+       get_url:
+         url: "{{ templates_base_url }}/{{ pipelines_folder_nm }}/{{ item }}"
+         dest: "{{ temp_dir }}/{{ item }}"
+       loop: "{{ pipelines_files }}"
+
+     - name: Deploy Pipeline files
+       k8s:
+         src: "{{ temp_dir }}/{{ item }}"
+         namespace: "{{ proj_nm_dev }}"
+         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+         validate_certs: no
+       loop: "{{ pipelines_files }}"
+
    always:
       - name: If OpenShift login succeeded try to log out
         when: k8s_auth_results.k8s_auth.api_key is defined
         k8s_auth:
           state: absent
           api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+
+      - name: Delete temp files
+        file:
+          state: absent
+          path: "{{ temp_dir }}"

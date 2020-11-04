@@ -9,6 +9,8 @@
       ocp_admin: opentlc-mgr
       proj_nm_operators: gpte-operators
       proj_nm_infra: labs-infra
+      proj_nm_dev: dev
+      templates_base_url: https://raw.githubusercontent.com/edeandrea/summit-lab-spring-music/pipeline/misc/templates
     roles:
       - role: ClusterLogging
         tags:
