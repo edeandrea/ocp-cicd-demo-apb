@@ -43,12 +43,15 @@
         retries: 50
         delay: 10
 
-      - name: Check if SonarQube plugins already installed
+      - name: Wait for SonarQube API to become available
         uri:
           url: "{{ sonarqube_url.url }}/api/plugins/installed"
           validate_certs: no
           status_code: 200
         register: sonarqube_installed_plugins
+        until: sonarqube_installed_plugins.status == 200
+        retries: 50
+        delay: 10
 
       - name: Install SonarQube plugins
         uri:
@@ -62,14 +65,9 @@
         loop:
           - cobertura
           - findbugs
-          - scmgit
           - groovy
-          - jacoco
           - javai18n
           - pmd
-          - java
-          - kotlin
-        when: sonarqube_installed_plugins.json.plugins|length == 0
 
       - name: Restart SonarQube server
         uri:
@@ -80,7 +78,6 @@
           password: "{{ sonarqube_admin_password }}"
           validate_certs: no
           status_code: 200
-        when: sonarqube_installed_plugins.json.plugins|length == 0
 
       - name: Wait for SonarQube restart to complete
         uri:
@@ -89,9 +86,8 @@
           force_basic_auth: yes
           user: "{{ sonarqube_admin_username }}"
           password: "{{ sonarqube_admin_password }}"
-        when: sonarqube_installed_plugins.json.plugins|length == 0
         register: sonarqube_installed_plugins
-        until: sonarqube_installed_plugins.status == 200 and sonarqube_installed_plugins.json.plugins|length == 9
+        until: sonarqube_installed_plugins.status == 200
         retries: 50
         delay: 10
 
@@ -111,25 +107,6 @@
         loop:
           - { key: 'sonar.coverage.jacoco.xmlReportPaths', value: 'target/site/jacoco/jacoco.xml' }
           - { key: 'sonar.junit.reportPaths', value: 'target/surefire-reports' }
-
-      - name: Restore Quality Profile
-        shell: 'curl -u {{ sonarqube_admin_username }}:{{ sonarqube_admin_password }} -k -X POST -H "Content-Type: multipart/form-data" -F "backup=@{{ playbook_dir }}/roles/SonarQube/objects/my_way_java_8_spring.xml" "{{ sonarqube_url.url }}/api/qualityprofiles/restore"'
-        args:
-          warn: no
-
-      - name: Set Quality Profile as default
-        uri:
-          url: "{{ sonarqube_url.url }}/api/qualityprofiles/set_default"
-          method: POST
-          validate_certs: no
-          force_basic_auth: yes
-          user: "{{ sonarqube_admin_username }}"
-          password: "{{ sonarqube_admin_password }}"
-          status_code: 204
-          body_format: form-urlencoded
-          body:
-            language: java
-            qualityProfile: My Way Java 8 Spring
 
     always:
       - name: If OpenShift login succeeded try to log out
