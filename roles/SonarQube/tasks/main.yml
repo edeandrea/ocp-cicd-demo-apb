@@ -79,6 +79,11 @@
           validate_certs: no
           status_code: 200
 
+      - name: Pause for restart to take place
+        pause:
+          echo: no
+          seconds: 30
+
       - name: Wait for SonarQube restart to complete
         uri:
           url: "{{ sonarqube_url.url }}/api/plugins/installed"
